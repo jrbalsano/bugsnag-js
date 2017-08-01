@@ -823,19 +823,19 @@
   // To set the script to use XHR, you can specify data-notifyhandler attribute in the script tag
   // Eg. `<script data-notifyhandler="xhr">` - the request defaults to image if attribute is not set
   function request(url, params) {
-    url += "?" + serialize(params) + "&ct=img&cb=" + new Date().getTime();
-    if (typeof BUGSNAG_TESTING !== "undefined" && self.testRequest) {
-      self.testRequest(url, params);
+    var notifyHandler = getSetting("notifyHandler");
+    if (notifyHandler === "xhr") {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", url, true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.send(JSON.stringify(params));
     } else {
-      var notifyHandler = getSetting("notifyHandler");
-      if (notifyHandler === "xhr") {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", url, true);
-        xhr.send();
-      } else {
-        var img = new Image();
-        img.src = url;
+      url += "?" + serialize(params) + "&ct=img&cb=" + new Date().getTime();
+      if (typeof BUGSNAG_TESTING !== "undefined" && self.testRequest) {
+        self.testRequest(url, params);
       }
+      var img = new Image();
+      img.src = url;
     }
   }
 
@@ -845,7 +845,7 @@
   // Similar to jQuery's `$(el).data()` method.
   function getData(node) {
     var dataAttrs = {};
-    var dataRegex = /^data\-([\w\-]+)$/;
+    var dataRegex = /^data-([\w-]+)$/;
 
     // If the node doesn't exist due to being loaded as a commonjs module,
     // then return an empty object and fallback to self[].
@@ -1041,7 +1041,7 @@
         }
         return ret + ">";
       } else {
-         // e.g. #document
+        // e.g. #document
         return target.nodeName;
       }
     }
